@@ -1,0 +1,198 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ShopFlow - a full-stack learning project.">
+    <title>ShopFlow | Everyday Essentials</title>
+    <link rel="stylesheet" href="styles.css">
+    <script type="module" src="app.js"></script>
+</head>
+<body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header">
+        <div class="container header-inner">
+            <a class="logo" href="#" aria-label="ShopFlow home">
+                <span class="logo-mark">S</span>
+                <span>ShopFlow</span>
+            </a>
+
+            <nav class="navigation" aria-label="Main navigation">
+                <a href="#products">Products</a>
+                <a href="#about">About</a>
+                <a href="#contact">Contact</a>
+                <a class="nav-link cart-link" href="#cart">
+                    Cart (<span id="cart-count" aria-live="polite">0</span>)
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <main id="main">
+        <section class="hero">
+            <div class="container hero-grid">
+                <div class="hero-copy">
+                    <p class="eyebrow">CURATED EVERYDAY ESSENTIALS</p>
+
+                    <h1>
+                        Good design.
+                        <span>Better everyday.</span>
+                    </h1>
+
+                    <p class="hero-description">
+                        Discover thoughtfully selected products designed
+                        to make everyday life simpler and more enjoyable.
+                    </p>
+
+                    <a class="button" href="#products">
+                        Explore the collection
+                        <span aria-hidden="true">→</span>
+                    </a>
+
+                    <p class="hero-note">
+                        A learning project built with HTML, CSS and JavaScript.
+                    </p>
+                </div>
+
+                <div class="hero-art" aria-label="Decorative product display">
+                    <div class="art-circle"></div>
+
+                    <div class="art-card art-card-main">
+                        <span class="art-emoji" aria-hidden="true">🎧</span>
+                        <span class="art-label">Thoughtful design</span>
+                    </div>
+
+                    <div class="art-card art-card-small">
+                        <span aria-hidden="true">✦</span>
+                        Made for everyday
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="benefits" aria-label="Store highlights">
+            <div class="container benefits-grid">
+                <article class="benefit">
+                    <span class="benefit-icon" aria-hidden="true">✦</span>
+                    <div>
+                        <h2>Curated products</h2>
+                        <p>Simple, useful and thoughtful.</p>
+                    </div>
+                </article>
+
+                <article class="benefit">
+                    <span class="benefit-icon" aria-hidden="true">◇</span>
+                    <div>
+                        <h2>Clean design</h2>
+                        <p>A comfortable shopping experience.</p>
+                    </div>
+                </article>
+
+                <article class="benefit">
+                    <span class="benefit-icon" aria-hidden="true">↗</span>
+                    <div>
+                        <h2>Always improving</h2>
+                        <p>Built step by step with code.</p>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <section class="products-section" id="products">
+            <div class="container">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">THE COLLECTION</p>
+                        <h2>Everyday favorites</h2>
+                    </div>
+
+                    <p class="section-description">
+                        Search and explore our sample product catalog.
+                    </p>
+                </div>
+
+                <div class="product-controls">
+                    <div class="search-control">
+                        <label for="search-input">Search products</label>
+                        <input
+                            id="search-input"
+                            type="search"
+                            placeholder="Try headphones..."
+                            autocomplete="off"
+                        >
+                    </div>
+
+                    <div class="filter-control">
+                        <label for="category-filter">Category</label>
+                        <select id="category-filter">
+                            <option value="all">All categories</option>
+                            <option value="technology">Technology</option>
+                            <option value="accessories">Accessories</option>
+                            <option value="lifestyle">Lifestyle</option>
+                            <option value="home">Home</option>
+                        </select>
+                    </div>
+                </div>
+
+                <p class="results-status" id="results-status" aria-live="polite"></p>
+
+                <div class="product-grid" id="product-grid">
+                    <p>Loading products...</p>
+                </div>
+                <section class="cart-section" id="cart"
+                        aria-labelledby="cart-heading">
+
+                    <div class="cart-section-heading">
+                        <p class="eyebrow">YOUR SELECTION</p>
+                        <h2 id="cart-heading">Shopping cart</h2>
+                    </div>
+
+                    <div class="cart-panel">
+                        <ul class="cart-items" id="cart-items" aria-live="polite">
+                            <li class="cart-empty">Your cart is empty.</li>
+                        </ul>
+
+                        <div class="cart-summary">
+                            <span>Subtotal</span>
+                            <strong id="cart-total">$0.00</strong>
+                        </div>
+
+                        <p class="cart-note">
+                            Demo only — no real orders or payments are processed.
+                        </p>
+                    </div>
+                </section>
+            </div>
+        </section>
+
+        <section class="about-section" id="about">
+            <div class="container about-content">
+                <p class="eyebrow">ABOUT SHOPFLOW</p>
+                <h2>Small details make a difference.</h2>
+                <p>
+                    ShopFlow is a portfolio project that will grow into
+                    a functional online store with a Python backend,
+                    a React frontend and useful business automations.
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer" id="contact">
+        <div class="container footer-inner">
+            <a class="logo footer-logo" href="#">
+                <span class="logo-mark">S</span>
+                <span>ShopFlow</span>
+            </a>
+
+            <p>
+                Portfolio demo — no real orders or payments are processed.
+            </p>
+
+            <p>Built step by step with code.</p>
+        </div>
+    </footer>
+</body>
+</html>
