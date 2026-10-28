@@ -7,6 +7,7 @@ import {
   describe,
   expect,
   it,
+  vi,
 } from "vitest";
 
 import {
@@ -19,71 +20,131 @@ import {
 
 import App from "./App.jsx";
 
+const API_PRODUCTS = [
+  {
+    id: 1,
+    name: "Studio Headphones",
+    category: "technology",
+    description: "Comfortable listening for every day.",
+    price: "59.00",
+    image_url: "",
+  },
+  {
+    id: 2,
+    name: "Daily Backpack",
+    category: "accessories",
+    description: "A practical companion for your routine.",
+    price: "45.00",
+    image_url: "",
+  },
+  {
+    id: 3,
+    name: "Ceramic Mug",
+    category: "lifestyle",
+    description: "Make your morning ritual special.",
+    price: "18.00",
+    image_url: "",
+  },
+  {
+    id: 4,
+    name: "Ambient Desk Light",
+    category: "home",
+    description: "A softer glow for your workspace.",
+    price: "35.00",
+    image_url: "",
+  },
+];
+
 beforeEach(() => {
   localStorage.clear();
+
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => API_PRODUCTS,
+    })
+  );
 });
 
 afterEach(() => {
   cleanup();
+  vi.unstubAllGlobals();
 });
 
+async function renderLoadedApp() {
+  render(<App />);
+
+  // Wait until React has received and rendered the API products.
+  await screen.findByRole("heading", {
+    name: "Studio Headphones",
+  });
+}
+
 describe("ShopFlow React storefront", () => {
-  it("renders all four products", () => {
-    render(<App />);
+  it("renders all four products", async () => {
+    await renderLoadedApp();
 
-    expect(
-      screen.getByRole("heading", { name: "Studio Headphones" })
-    ).toBeInTheDocument();
+    for (const product of API_PRODUCTS) {
+      expect(
+        screen.getByRole("heading", { name: product.name })
+      ).toBeInTheDocument();
+    }
 
-    expect(
-      screen.getByRole("heading", { name: "Daily Backpack" })
-    ).toBeInTheDocument();
-
-    expect(
-      screen.getByRole("heading", { name: "Ceramic Mug" })
-    ).toBeInTheDocument();
-
-    expect(
-      screen.getByRole("heading", { name: "Ambient Desk Light" })
-    ).toBeInTheDocument();
+    expect(fetch).toHaveBeenCalledWith(
+      "http://127.0.0.1:8000/api/products/"
+    );
   });
 
-  it("searches products by name", () => {
-    render(<App />);
+  it("searches products by name", async () => {
+    await renderLoadedApp();
 
     fireEvent.change(
-      screen.getByRole("searchbox", { name: "Search products" }),
+      screen.getByRole("searchbox", {
+        name: "Search products",
+      }),
       { target: { value: "headphones" } }
     );
 
     expect(
-      screen.getByRole("heading", { name: "Studio Headphones" })
+      screen.getByRole("heading", {
+        name: "Studio Headphones",
+      })
     ).toBeInTheDocument();
 
     expect(
-      screen.queryByRole("heading", { name: "Daily Backpack" })
+      screen.queryByRole("heading", {
+        name: "Daily Backpack",
+      })
     ).not.toBeInTheDocument();
   });
 
-  it("filters products by category", () => {
-    render(<App />);
+  it("filters products by category", async () => {
+    await renderLoadedApp();
 
     fireEvent.change(
-      screen.getByRole("combobox", { name: "Category" }),
+      screen.getByRole("combobox", {
+        name: "Category",
+      }),
       { target: { value: "technology" } }
     );
 
     expect(
-      screen.getByRole("heading", { name: "Studio Headphones" })
+      screen.getByRole("heading", {
+        name: "Studio Headphones",
+      })
     ).toBeInTheDocument();
 
     expect(
-      screen.queryByRole("heading", { name: "Daily Backpack" })
+      screen.queryByRole("heading", {
+        name: "Daily Backpack",
+      })
     ).not.toBeInTheDocument();
   });
 
-  it("adds a product and updates the cart count", () => {
-    render(<App />);
+  it("adds a product and updates the cart count", async () => {
+    await renderLoadedApp();
 
     const productHeading = screen.getByRole("heading", {
       name: "Studio Headphones",
@@ -101,7 +162,9 @@ describe("ShopFlow React storefront", () => {
       name: "Main navigation",
     });
 
-    expect(within(navigation).getByText("1")).toBeInTheDocument();
+    expect(
+      within(navigation).getByText("1")
+    ).toBeInTheDocument();
 
     const cart = screen.getByRole("region", {
       name: "Shopping cart",
@@ -113,16 +176,21 @@ describe("ShopFlow React storefront", () => {
       })
     ).toBeInTheDocument();
 
+    // Unit price, row total and cart subtotal.
     expect(
-      within(cart).getAllByText("$59.00", { exact: true })
+      within(cart).getAllByText("$59.00", {
+        exact: true,
+      })
     ).toHaveLength(2);
   });
 
-  it("changes quantity and removes an item", () => {
-    render(<App />);
+  it("changes quantity and removes an item", async () => {
+    await renderLoadedApp();
 
     const productCard = screen
-      .getByRole("heading", { name: "Studio Headphones" })
+      .getByRole("heading", {
+        name: "Studio Headphones",
+      })
       .closest("article");
 
     fireEvent.click(
@@ -141,7 +209,9 @@ describe("ShopFlow React storefront", () => {
       })
     );
 
-    expect(within(cart).getByText("2")).toBeInTheDocument();
+    expect(
+      within(cart).getByText("2")
+    ).toBeInTheDocument();
 
     fireEvent.click(
       within(cart).getByRole("button", {
@@ -149,10 +219,14 @@ describe("ShopFlow React storefront", () => {
       })
     );
 
-    expect(within(cart).getByText("1")).toBeInTheDocument();
+    expect(
+      within(cart).getByText("1")
+    ).toBeInTheDocument();
 
     fireEvent.click(
-      within(cart).getByRole("button", { name: "Remove" })
+      within(cart).getByRole("button", {
+        name: "Remove",
+      })
     );
 
     expect(
@@ -160,10 +234,12 @@ describe("ShopFlow React storefront", () => {
     ).toBeInTheDocument();
   });
 
-  it("restores a saved cart from localStorage", () => {
+  it("restores a saved cart from localStorage", async () => {
     localStorage.setItem(
       "shopflow-cart-v1",
-      JSON.stringify([{ productId: 1, quantity: 2 }])
+      JSON.stringify([
+        { productId: 1, quantity: 2 },
+      ])
     );
 
     render(<App />);
@@ -172,10 +248,18 @@ describe("ShopFlow React storefront", () => {
       name: "Shopping cart",
     });
 
-    expect(within(cart).getByText("2")).toBeInTheDocument();
+    await within(cart).findByRole("heading", {
+      name: "Studio Headphones",
+    });
 
     expect(
-      within(cart).getAllByText("$118.00", { exact: true })
+      within(cart).getByText("2")
+    ).toBeInTheDocument();
+
+    expect(
+      within(cart).getAllByText("$118.00", {
+        exact: true,
+      })
     ).toHaveLength(2);
   });
 });

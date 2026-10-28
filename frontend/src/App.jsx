@@ -9,48 +9,33 @@ import {
   calculateSubtotal,
 } from "../../cart.js";
 
-const PRODUCTS = [
-  {
-    id: 1,
-    name: "Studio Headphones",
-    category: "technology",
-    categoryLabel: "TECHNOLOGY",
-    description: "Comfortable listening for every day.",
-    price: 59,
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  "http://127.0.0.1:8000/api";
+
+const PRODUCT_PRESENTATION = {
+  1: {
     emoji: "🎧",
     colorClass: "product-art-sand",
   },
-  {
-    id: 2,
-    name: "Daily Backpack",
-    category: "accessories",
-    categoryLabel: "ACCESSORIES",
-    description: "A practical companion for your routine.",
-    price: 45,
+  2: {
     emoji: "🎒",
     colorClass: "product-art-blue",
   },
-  {
-    id: 3,
-    name: "Ceramic Mug",
-    category: "lifestyle",
-    categoryLabel: "LIFESTYLE",
-    description: "Make your morning ritual special.",
-    price: 18,
+  3: {
     emoji: "☕",
     colorClass: "product-art-green",
   },
-  {
-    id: 4,
-    name: "Ambient Desk Light",
-    category: "home",
-    categoryLabel: "HOME",
-    description: "A softer glow for your workspace.",
-    price: 35,
+  4: {
     emoji: "💡",
     colorClass: "product-art-pink",
   },
-];
+};
+
+const DEFAULT_PRESENTATION = {
+  emoji: "🛍️",
+  colorClass: "product-art-sand",
+};
 
 const CART_STORAGE_KEY = "shopflow-cart-v1";
 
@@ -80,7 +65,7 @@ function loadCart() {
         item !== null &&
         typeof item === "object" &&
         Number.isSafeInteger(item.productId) &&
-        PRODUCTS.some((product) => product.id === item.productId) &&
+        item.productId > 0 &&
         Number.isSafeInteger(item.quantity) &&
         item.quantity > 0
     );
@@ -92,8 +77,104 @@ function loadCart() {
 
 export default function App() {
   const [cart, setCart] = useState(loadCart);
+  const [products, setProducts] = useState([]);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [productsError, setProductsError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchProducts() {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/products/`
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            `API request failed: HTTP ${response.status}`
+          );
+        }
+
+        const data = await response.json();
+
+        const apiProducts = Array.isArray(data)
+          ? data
+          : Array.isArray(data.results)
+            ? data.results
+            : Array.isArray(data.value)
+              ? data.value
+              : null;
+
+        if (!apiProducts) {
+          throw new Error("Unexpected products API response.");
+        }
+
+        const normalizedProducts = apiProducts.map((product) => {
+          const id = Number(product.id);
+          const presentation =
+            PRODUCT_PRESENTATION[id] ?? DEFAULT_PRESENTATION;
+
+          return {
+            ...product,
+            id,
+            price: Number(product.price),
+            categoryLabel: String(product.category).toUpperCase(),
+            emoji: presentation.emoji,
+            colorClass: presentation.colorClass,
+          };
+        });
+
+        const invalidProduct = normalizedProducts.some(
+          (product) =>
+            !Number.isSafeInteger(product.id) ||
+            product.id <= 0 ||
+            typeof product.name !== "string" ||
+            !Number.isFinite(product.price) ||
+            product.price < 0
+        );
+
+        if (invalidProduct) {
+          throw new Error("The API returned invalid product data.");
+        }
+
+        if (cancelled) return;
+
+        setProducts(normalizedProducts);
+
+        // Keep only cart items that still exist in the API.
+        setCart((currentCart) =>
+          currentCart.filter((item) =>
+            normalizedProducts.some(
+              (product) => product.id === item.productId
+            )
+          )
+        );
+      } catch (error) {
+        if (!cancelled) {
+          setProductsError(
+            error instanceof Error
+              ? error.message
+              : "Could not load products."
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setProductsLoading(false);
+        }
+      }
+    }
+
+    fetchProducts();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
 
   useEffect(() => {
     try {
@@ -105,7 +186,7 @@ export default function App() {
 
   const normalizedSearch = searchTerm.trim().toLowerCase();
 
-  const filteredProducts = PRODUCTS.filter((product) => {
+  const filteredProducts = products.filter((product) => {
     const matchesSearch =
       product.name.toLowerCase().includes(normalizedSearch) ||
       product.description.toLowerCase().includes(normalizedSearch);
@@ -118,7 +199,7 @@ export default function App() {
   });
 
   const cartCount = getCartCount(cart);
-  const subtotal = calculateSubtotal(cart, PRODUCTS);
+  const subtotal = calculateSubtotal(cart, products);
 
   function handleAddToCart(productId) {
     setCart((currentCart) => addItem(currentCart, productId));
@@ -271,11 +352,26 @@ export default function App() {
             </div>
 
             <p className="results-status" aria-live="polite">
-              {filteredProducts.length} product(s) found
-            </p>
+            {productsLoading
+              ? "Loading products..."
+              : productsError
+                ? "Products unavailable"
+                : `${filteredProducts.length} product(s) found`}
+          </p>
+
 
             <div className="product-grid">
-              {filteredProducts.length === 0 ? (
+              {productsLoading ? (
+                <p className="empty-state" role="status">
+                  Loading products from ShopFlow API...
+                </p>
+              ) : productsError ? (
+                <p className="empty-state" role="alert">
+                  Could not load products: {productsError}
+                  {" "}
+                  Make sure the Django server is running.
+                </p>
+              ) : filteredProducts.length === 0 ? (
                 <p className="empty-state">
                   No products found. Try another search.
                 </p>
@@ -316,6 +412,7 @@ export default function App() {
               )}
             </div>
 
+
             <section
               className="cart-section"
               id="cart"
@@ -332,7 +429,7 @@ export default function App() {
                     <li className="cart-empty">Your cart is empty.</li>
                   ) : (
                     cart.map((item) => {
-                      const product = PRODUCTS.find(
+                      const product = products.find(
                         (entry) => entry.id === item.productId
                       );
 
